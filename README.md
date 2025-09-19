@@ -10,6 +10,8 @@ This small lab app demonstrates _vulnerable vs safe_ patterns for **SQL Injectio
 > - The app contains intentionally insecure endpoints.
 > - Create a VM snapshot before testing so you can revert.
 
+![security.png](templates/security.png)
+
 ---
 
 ## Files included

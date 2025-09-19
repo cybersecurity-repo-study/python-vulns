@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flask Vulnerabilities Lab</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      font-weight: 300;
+    }
+
+    .header p {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+
+    .warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px;
+      color: #856404;
+    }
+
+    .warning h3 {
+      color: #d63031;
+      margin-bottom: 10px;
+      font-size: 1.2em;
+    }
+
+    .warning ul {
+      margin-left: 20px;
+    }
+
+    .warning li {
+      margin-bottom: 5px;
+    }
+
+    .vulnerabilities {
+      padding: 30px;
+    }
+
+    .vuln-section {
+      margin-bottom: 40px;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .vuln-header {
+      background: #f8f9fa;
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .vuln-header h2 {
+      color: #2d3436;
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+
+    .vuln-header p {
+      color: #636e72;
+      font-size: 1.1em;
+    }
+
+    .endpoints {
+      padding: 20px;
+    }
+
+    .endpoint-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .endpoint {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .endpoint:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .endpoint.vulnerable {
+      border-left: 5px solid #e74c3c;
+      background: #fdf2f2;
+    }
+
+    .endpoint.safe {
+      border-left: 5px solid #27ae60;
+      background: #f2fdf2;
+    }
+
+    .endpoint h3 {
+      margin-bottom: 10px;
+      font-size: 1.3em;
+    }
+
+    .endpoint.vulnerable h3 {
+      color: #e74c3c;
+    }
+
+    .endpoint.safe h3 {
+      color: #27ae60;
+    }
+
+    .endpoint .method {
+      background: #3498db;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .endpoint .method.post {
+      background: #e67e22;
+    }
+
+    .endpoint .method.get {
+      background: #3498db;
+    }
+
+    .endpoint .url {
+      font-family: 'Courier New', monospace;
+      background: #f8f9fa;
+      padding: 8px;
+      border-radius: 4px;
+      margin: 10px 0;
+      word-break: break-all;
+    }
+
+    .endpoint .description {
+      color: #636e72;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    .endpoint .example {
+      background: #2d3436;
+      color: #ddd;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
+
+    .endpoint a {
+      display: inline-block;
+      background: #3498db;
+      color: white;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    .endpoint a:hover {
+      background: #2980b9;
+    }
+
+    .endpoint.vulnerable a {
+      background: #e74c3c;
+    }
+
+    .endpoint.vulnerable a:hover {
+      background: #c0392b;
+    }
+
+    .endpoint.safe a {
+      background: #27ae60;
+    }
+
+    .endpoint.safe a:hover {
+      background: #229954;
+    }
+
+    .footer {
+      background: #2d3436;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .footer p {
+      margin-bottom: 10px;
+    }
+
+    .footer a {
+      color: #74b9ff;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+      .endpoint-group {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 2em;
+      }
+
+      .container {
+        margin: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔒 Flask Vulnerabilities Lab</h1>
+      <p>Educational demonstration of web security vulnerabilities</p>
+    </div>
+
+    <div class="warning">
+      <h3>⚠️ IMPORTANT SAFETY WARNING</h3>
+      <ul>
+        <li>Run <strong>ONLY</strong> in an isolated lab (local VM / Kali / snapshot)</li>
+        <li>Do <strong>NOT</strong> expose this app to the Internet</li>
+        <li>Do <strong>NOT</strong> use these examples against third-party systems</li>
+        <li>This app contains intentionally insecure endpoints</li>
+        <li>Create a VM snapshot before testing so you can revert</li>
+      </ul>
+    </div>
+
+    <div class="vulnerabilities">
+      <!-- SQL Injection Section -->
+      <div class="vuln-section">
+        <div class="vuln-header">
+          <h2>💉 SQL Injection</h2>
+          <p>Demonstrates how unsanitized user input can be used to manipulate database queries</p>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint-group">
+            <div class="endpoint vulnerable">
+              <span class="method get">GET</span>
+              <h3>Vulnerable Endpoint</h3>
+              <div class="url">/sql_vuln?username=&lt;value&gt;</div>
+              <div class="description">
+                Builds SQL queries using string concatenation. Try payloads like:
+                <code>' UNION SELECT 1,sqlite_version()--</code>
+              </div>
+              <div class="example">
+                Example: ?username=alice<br>
+                Payload: ?username=' UNION SELECT 1,sqlite_version()--
+              </div>
+              <a href="/sql_vuln?username=alice" target="_blank">Test Vulnerable</a>
+            </div>
+
+            <div class="endpoint safe">
+              <span class="method get">GET</span>
+              <h3>Safe Endpoint</h3>
+              <div class="url">/sql_safe?username=&lt;value&gt;</div>
+              <div class="description">
+                Uses parameterized queries to prevent SQL injection attacks
+              </div>
+              <div class="example">
+                Same input, but safely handled with prepared statements
+              </div>
+              <a href="/sql_safe?username=alice" target="_blank">Test Safe</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RCE Section -->
+      <div class="vuln-section">
+        <div class="vuln-header">
+          <h2>⚡ Remote Code Execution (RCE)</h2>
+          <p>Shows how insecure subprocess usage can lead to arbitrary command execution</p>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint-group">
+            <div class="endpoint vulnerable">
+              <span class="method post">POST</span>
+              <h3>Vulnerable Endpoint</h3>
+              <div class="url">/rce_vuln</div>
+              <div class="description">
+                Uses shell=True with user input. Dangerous! Use only benign commands like "echo hello"
+              </div>
+              <div class="example">
+                Body: {"cmd": "echo hello"}
+              </div>
+              <a href="/rce_vuln" target="_blank">Test Vulnerable</a>
+            </div>
+
+            <div class="endpoint safe">
+              <span class="method post">POST</span>
+              <h3>Safe Endpoint</h3>
+              <div class="url">/rce_safe</div>
+              <div class="description">
+                Validates input and uses argument lists instead of shell=True
+              </div>
+              <div class="example">
+                Body: {"filename": "."}
+              </div>
+              <a href="/rce_safe" target="_blank">Test Safe</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SSRF Section -->
+      <div class="vuln-section">
+        <div class="vuln-header">
+          <h2>🌐 Server-Side Request Forgery (SSRF)</h2>
+          <p>Demonstrates how unrestricted URL fetching can be exploited</p>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint-group">
+            <div class="endpoint vulnerable">
+              <span class="method get">GET</span>
+              <h3>Vulnerable Endpoint</h3>
+              <div class="url">/fetch_vuln?url=&lt;url&gt;</div>
+              <div class="description">
+                Fetches any URL provided by user without validation
+              </div>
+              <div class="example">
+                Example: ?url=https://example.com
+              </div>
+              <a href="/fetch_vuln?url=https://example.com" target="_blank">Test Vulnerable</a>
+            </div>
+
+            <div class="endpoint safe">
+              <span class="method get">GET</span>
+              <h3>Safe Endpoint</h3>
+              <div class="url">/fetch_safe?url=&lt;url&gt;</div>
+              <div class="description">
+                Uses whitelist and DNS resolution checks to prevent SSRF
+              </div>
+              <div class="example">
+                Only allows: example.com, httpbin.org
+              </div>
+              <a href="/fetch_safe?url=https://example.com" target="_blank">Test Safe</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- XSS Section -->
+      <div class="vuln-section">
+        <div class="vuln-header">
+          <h2>🎯 Cross-Site Scripting (XSS)</h2>
+          <p>Shows how unescaped user input can lead to script injection</p>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint-group">
+            <div class="endpoint vulnerable">
+              <span class="method get">GET</span>
+              <h3>Reflected XSS</h3>
+              <div class="url">/xss_vuln?name=&lt;value&gt;</div>
+              <div class="description">
+                User input directly embedded in HTML without escaping
+              </div>
+              <div class="example">
+                Payload: ?name=&lt;script&gt;alert('XSS')&lt;/script&gt;
+              </div>
+              <a href="/xss_vuln?name=John" target="_blank">Test Vulnerable</a>
+            </div>
+
+            <div class="endpoint safe">
+              <span class="method get">GET</span>
+              <h3>Safe Reflected XSS</h3>
+              <div class="url">/xss_safe?name=&lt;value&gt;</div>
+              <div class="description">
+                Properly escapes HTML entities to prevent XSS
+              </div>
+              <div class="example">
+                Same input, but safely escaped
+              </div>
+              <a href="/xss_safe?name=John" target="_blank">Test Safe</a>
+            </div>
+          </div>
+
+          <div class="endpoint-group">
+            <div class="endpoint vulnerable">
+              <span class="method">GET/POST</span>
+              <h3>Stored XSS</h3>
+              <div class="url">/comments_vuln</div>
+              <div class="description">
+                Comments stored and displayed without escaping
+              </div>
+              <div class="example">
+                Form fields: author, content
+              </div>
+              <a href="/comments_vuln" target="_blank">Test Vulnerable</a>
+            </div>
+
+            <div class="endpoint safe">
+              <span class="method">GET/POST</span>
+              <h3>Safe Stored XSS</h3>
+              <div class="url">/comments_safe</div>
+              <div class="description">
+                Input validation and HTML escaping when displaying
+              </div>
+              <div class="example">
+                Same functionality, but secure
+              </div>
+              <a href="/comments_safe" target="_blank">Test Safe</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p><strong>Educational Purpose Only</strong></p>
+      <p>This lab is designed for learning web security vulnerabilities in a controlled environment</p>
+      <p>Always follow responsible disclosure and ethical hacking practices</p>
+    </div>
+  </div>
+</body>
+
+</html>
